@@ -30,19 +30,3 @@ def showGrades():
         print(f"Nota: {grades[i]} - Clasificación: {classification[i]}")
 
 
-while True:
-
-    grade = float(input("Ingrese su nota: "))
-
-    addGrade(grade)
-
-    answer = input("¿Desea ingresar otra nota? (s/n): ")
-
-    answer = answer.upper()
-
-    if answer == "N":
-        break
-
-
-print("\n--- RESULTADO FINAL ---")
-showGrades()

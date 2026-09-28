@@ -1,0 +1,1 @@
+lista_compras = ["coca", "agua", "gaseosa", "computadora"]
