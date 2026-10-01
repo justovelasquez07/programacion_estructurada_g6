@@ -1,10 +1,21 @@
-matriz = []
-for i in range (2):
-    matriz.append([])
-    for j in range ([]):
-        matriz[i].append(int(input(f"ingrese el valor ")))
+def crear_matriz(filas, columnas):
 
-for i in matriz:
-    print(i)
-    
+    matriz = []
 
+    for i in range(filas):
+
+        matriz.append([])
+
+        for j in range(columnas):
+
+            matriz[i].append(
+                int(input(f"Ingrese el valor [{i}][{j}]: "))
+            )
+
+    return matriz
+
+
+matriz = crear_matriz(2, 2)
+
+for fila in matriz:
+    print(fila)

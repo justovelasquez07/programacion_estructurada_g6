@@ -1,41 +1,54 @@
-matrizA = []
+def ingresar_matriz(nombre, filas, columnas):
 
-for i in range(3):
-    matrizA.append([])
+    matriz = []
 
-    for j in range(3):
-        matrizA[i].append(
-            int(input(f"Ingrese el valor de la primera matriz [{i}][{j}]: "))
-        )
+    for i in range(filas):
+        matriz.append([])
 
-for fila in matrizA:
-    print(fila)
+        for j in range(columnas):
+            valor = int(input(
+                f"Ingrese el valor de la {nombre} matriz [{i}][{j}]: "
+            ))
 
+            matriz[i].append(valor)
 
-matrizB = []
-
-for i in range(3):
-    matrizB.append([])
-
-    for j in range(3):
-        matrizB[i].append(
-            int(input(f"Ingrese el valor de la segunda matriz [{i}][{j}]: "))
-        )
-
-for fila in matrizB:
-    print(fila)
+    return matriz
 
 
-matrizC = []
+def sumar_matrices(matrizA, matrizB):
 
-for i in range(len(matrizA)):
-    matrizC.append([])
+    matrizC = []
 
-    for j in range(len(matrizA[i])):
-        suma = matrizA[i][j] + matrizB[i][j]
-        matrizC[i].append(suma)
+    for i in range(len(matrizA)):
+        matrizC.append([])
+
+        for j in range(len(matrizA[i])):
+            suma = matrizA[i][j] + matrizB[i][j]
+
+            matrizC[i].append(suma)
+
+    return matrizC
+
+
+def mostrar_matriz(matriz):
+
+    for fila in matriz:
+        print(fila)
+
+
+matrizA = ingresar_matriz("primera", 3, 3)
+
+print("Primera matriz:")
+mostrar_matriz(matrizA)
+
+
+matrizB = ingresar_matriz("segunda", 3, 3)
+
+print("Segunda matriz:")
+mostrar_matriz(matrizB)
+
+
+matrizC = sumar_matrices(matrizA, matrizB)
 
 print("Resultado:")
-
-for fila in matrizC:
-    print(fila)
+mostrar_matriz(matrizC)
