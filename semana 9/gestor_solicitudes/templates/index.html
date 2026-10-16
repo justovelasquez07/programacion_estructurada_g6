@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gestor de Solicitudes - UAM</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <header class="mb-4">
+        <h1 class="fw-bold text-primary">Gestor de Solicitudes</h1>
+        <p class="text-secondary">
+            Sistema de soporte técnico con pilas y colas en Python
+        </p>
+    </header>
+
+    <!-- Mensajes del sistema -->
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}
+            <div class="alert alert-{{ categoria }} alert-dismissible fade show">
+                {{ mensaje }}
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- Registrar solicitud -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4">Registrar solicitud</h2>
+
+            <form method="POST" action="{{ url_for('registrar') }}"
+                  class="row g-3">
+
+                <div class="col-md-4">
+                    <label for="cliente" class="form-label">Cliente</label>
+                    <input type="text" id="cliente" name="cliente"
+                           class="form-control" placeholder="Nombre del cliente"
+                           maxlength="100" required>
+                </div>
+
+                <div class="col-md-5">
+                    <label for="asunto" class="form-label">Asunto</label>
+                    <input type="text" id="asunto" name="asunto"
+                           class="form-control" placeholder="Problema técnico"
+                           maxlength="200" required>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card border-primary shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6 text-secondary">Pendientes</h3>
+                    <p class="display-6 mb-0">
+                        {{ estadisticas.pendientes }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-success shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6 text-secondary">Atendidas</h3>
+                    <p class="display-6 mb-0">
+                        {{ estadisticas.atendidas }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6 text-secondary">Total de solicitudes</h3>
+                    <p class="display-6 mb-0">
+                        {{ estadisticas.total }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Próximo turno -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4">Próximo turno</h2>
+
+            {% if siguiente %}
+                <p>
+                    <strong>ID: #{{ siguiente.id }}</strong><br>
+                    Cliente: {{ siguiente.cliente }}<br>
+                    Asunto: {{ siguiente.asunto }}
+                </p>
+                <p class="text-secondary">
+                    La consulta no elimina la solicitud de la cola.
+                </p>
+            {% else %}
+                <p class="text-secondary">
+                    No hay solicitudes pendientes.
+                </p>
+            {% endif %}
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <form method="POST" action="{{ url_for('atender') }}">
+                    <button type="submit" class="btn btn-success">
+                        Atender siguiente
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('deshacer') }}">
+                    <button type="submit" class="btn btn-warning">
+                        Deshacer última atención
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Buscar por ID -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4">Buscar solicitud por ID</h2>
+
+            <form method="GET" action="{{ url_for('buscar') }}"
+                  class="row g-2">
+
+                <div class="col-md-8">
+                    <input type="number" name="id" min="1"
+                           class="form-control"
+                           placeholder="Introduce el ID"
+                           value="{{ id_busqueda|default('') }}"
+                           required>
+                </div>
+
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        Buscar
+                    </button>
+                </div>
+
+            </form>
+
+            {% if busqueda is defined and busqueda %}
+                <div class="alert alert-info mt-3">
+                    <strong>Solicitud #{{ busqueda.id }}</strong><br>
+                    Cliente: {{ busqueda.cliente }}<br>
+                    Asunto: {{ busqueda.asunto }}<br>
+                    Estado: {{ busqueda.estado }}
+                </div>
+            {% elif error_busqueda is defined and error_busqueda %}
+                <div class="alert alert-warning mt-3">
+                    {{ error_busqueda }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Cola de pendientes -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4">Solicitudes pendientes (FIFO)</h2>
+
+            <p class="text-secondary">
+                La primera solicitud que llega es la primera en atenderse.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Asunto</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in pendientes %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td>{{ item.cliente }}</td>
+                                <td>{{ item.asunto }}</td>
+                                <td>
+                                    <form method="POST"
+                                          action="{{ url_for('cancelar', identificador=item.id) }}"
+                                          onsubmit="return confirm('¿Deseas cancelar esta solicitud?');">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger">
+                                            Cancelar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary">
+                                    No hay solicitudes pendientes.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deshacer varias atenciones -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4">Deshacer varias atenciones</h2>
+
+            <form method="POST" action="{{ url_for('deshacer_varias') }}"
+                  class="row g-3">
+
+                <div class="col-md-8">
+                    <label for="cantidad" class="form-label">
+                        Cantidad de atenciones
+                    </label>
+
+                    <input type="number" id="cantidad" name="cantidad"
+                           min="1" step="1" class="form-control"
+                           placeholder="Ejemplo: 2" required>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-warning w-100">
+                        Restaurar solicitudes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Historial de atenciones -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h4">Historial de atenciones (LIFO)</h2>
+
+            <p class="text-secondary">
+                La atención más reciente aparece primero.
+            </p>
+
+            <ul class="list-group">
+                {% for item in historial|reverse %}
+                    <li class="list-group-item">
+                        <strong>#{{ item.id }}</strong> —
+                        {{ item.cliente }}:
+                        {{ item.asunto }}
+
+                        <span class="badge text-bg-success">
+                            {{ item.estado }}
+                        </span>
+                    </li>
+                {% else %}
+                    <li class="list-group-item text-secondary">
+                        No hay atenciones registradas.
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <footer class="text-center text-secondary py-3">
+        Universidad Americana (UAM) · Práctica de Python
+    </footer>
+
+</div>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>
